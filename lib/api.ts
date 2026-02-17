@@ -1,7 +1,9 @@
 import { Property, SearchParams } from "./types";
 
-const BASE_URL = "https://api.simplyrets.com";
-const AUTH = Buffer.from("simplyrets:simplyrets").toString("base64");
+const BASE_URL = process.env.SIMPLYRETS_BASE_URL || "https://api.simplyrets.com";
+const AUTH = Buffer.from(
+  `${process.env.SIMPLYRETS_USERNAME || "simplyrets"}:${process.env.SIMPLYRETS_PASSWORD || "simplyrets"}`
+).toString("base64");
 
 async function fetchAPI<T>(endpoint: string, params?: Record<string, string | number | undefined>): Promise<T> {
   const url = new URL(`${BASE_URL}${endpoint}`);

@@ -83,19 +83,23 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
         if (user) {
           // Sync with Supabase in background
-          if (isFav) {
-            supabase
-              .from("favorites")
-              .delete()
-              .eq("user_id", user.id)
-              .eq("mls_id", mlsId)
-              .then();
-          } else {
-            supabase
-              .from("favorites")
-              .insert({ user_id: user.id, mls_id: mlsId })
-              .then();
-          }
+          const operation = isFav
+            ? supabase
+                .from("favorites")
+                .delete()
+                .eq("user_id", user.id)
+                .eq("mls_id", mlsId)
+            : supabase
+                .from("favorites")
+                .insert({ user_id: user.id, mls_id: mlsId });
+
+          operation.then(({ error }) => {
+            if (error) {
+              console.error("Failed to update favorite:", error.message);
+              // Revert optimistic update
+              setFavorites(prev);
+            }
+          });
         }
 
         return next;

@@ -3,6 +3,10 @@ import { searchProperties } from "@/lib/api";
 import { Property } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
+// Simple in-memory rate limiter (resets on redeploy)
+let lastSyncTime = 0;
+const SYNC_COOLDOWN_MS = 60_000; // 1 minute between syncs
+
 function toRow(p: Property) {
   return {
     mls_id: p.mlsId,
@@ -35,6 +39,16 @@ export async function POST(request: NextRequest) {
   if (!authHeader || authHeader !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const now = Date.now();
+  if (now - lastSyncTime < SYNC_COOLDOWN_MS) {
+    const retryAfter = Math.ceil((SYNC_COOLDOWN_MS - (now - lastSyncTime)) / 1000);
+    return NextResponse.json(
+      { error: "Rate limited. Try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
+  lastSyncTime = now;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -33,17 +33,10 @@ export default function FavoritesPage() {
 
         setProperties((data ?? []).map((row) => row.raw_json as Property));
       } catch {
-        // Fallback to direct API if DB has no data yet
+        // Fallback to server-side API route if DB has no data yet
         const results = await Promise.all(
           favorites.map(async (mlsId) => {
-            const res = await fetch(
-              `https://api.simplyrets.com/properties/${mlsId}`,
-              {
-                headers: {
-                  Authorization: `Basic ${btoa("simplyrets:simplyrets")}`,
-                },
-              }
-            );
+            const res = await fetch(`/api/properties/${mlsId}`);
             if (!res.ok) return null;
             return res.json();
           })

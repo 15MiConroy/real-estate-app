@@ -4,6 +4,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { validateEnv } from "@/lib/env";
+
+validateEnv();
 
 const inter = Inter({ subsets: ["latin"] });
 

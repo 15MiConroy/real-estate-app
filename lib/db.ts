@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Property, SearchParams } from "./types";
 
+const MAX_LIMIT = 100;
+
 export async function searchListings(params: SearchParams = {}): Promise<Property[]> {
   const supabase = createClient();
+
+  const limit = Math.min(params.limit || 12, MAX_LIMIT);
 
   let query = supabase.from("listings").select("raw_json");
 
@@ -31,16 +35,15 @@ export async function searchListings(params: SearchParams = {}): Promise<Propert
     query = query.lte("baths_full", params.maxbaths);
   }
   if (params.q) {
-    query = query.ilike("address_full", `%${params.q}%`);
+    const sanitized = params.q.replace(/[%_]/g, "\\$&");
+    query = query.ilike("address_full", `%${sanitized}%`);
   }
 
   query = query.order("list_price", { ascending: false });
 
-  if (params.limit) {
-    query = query.limit(params.limit);
-  }
+  query = query.limit(limit);
   if (params.offset) {
-    query = query.range(params.offset, params.offset + (params.limit || 12) - 1);
+    query = query.range(params.offset, params.offset + limit - 1);
   }
 
   const { data, error } = await query;

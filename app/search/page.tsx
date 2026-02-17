@@ -13,23 +13,37 @@ interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
+function clampInt(value: string | undefined, min: number, max: number): number | undefined {
+  if (typeof value !== "string") return undefined;
+  const n = parseInt(value);
+  if (isNaN(n)) return undefined;
+  return Math.max(min, Math.min(max, n));
+}
+
+const VALID_STATUSES = ["Active", "Pending", "Closed"];
+const VALID_TYPES = ["Residential", "Condominium", "Townhouse", "Land", "Commercial"];
+
 export default async function SearchPage({ searchParams }: PageProps) {
   const params: SearchParams = {
     limit: PAGE_SIZE,
   };
 
-  const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
-  const offset = typeof searchParams.offset === "string" ? parseInt(searchParams.offset) : 0;
+  const q = typeof searchParams.q === "string" ? searchParams.q.slice(0, 200) : undefined;
+  const offset = clampInt(searchParams.offset as string, 0, 10000) ?? 0;
 
   if (q) params.q = q;
-  if (typeof searchParams.status === "string") params.status = searchParams.status;
-  if (typeof searchParams.type === "string") params.type = searchParams.type;
-  if (typeof searchParams.minprice === "string") params.minprice = parseInt(searchParams.minprice);
-  if (typeof searchParams.maxprice === "string") params.maxprice = parseInt(searchParams.maxprice);
-  if (typeof searchParams.minbeds === "string") params.minbeds = parseInt(searchParams.minbeds);
-  if (typeof searchParams.maxbeds === "string") params.maxbeds = parseInt(searchParams.maxbeds);
-  if (typeof searchParams.minbaths === "string") params.minbaths = parseInt(searchParams.minbaths);
-  if (typeof searchParams.maxbaths === "string") params.maxbaths = parseInt(searchParams.maxbaths);
+  if (typeof searchParams.status === "string" && VALID_STATUSES.includes(searchParams.status)) {
+    params.status = searchParams.status;
+  }
+  if (typeof searchParams.type === "string" && VALID_TYPES.includes(searchParams.type)) {
+    params.type = searchParams.type;
+  }
+  params.minprice = clampInt(searchParams.minprice as string, 0, 100_000_000);
+  params.maxprice = clampInt(searchParams.maxprice as string, 0, 100_000_000);
+  params.minbeds = clampInt(searchParams.minbeds as string, 0, 20);
+  params.maxbeds = clampInt(searchParams.maxbeds as string, 0, 20);
+  params.minbaths = clampInt(searchParams.minbaths as string, 0, 20);
+  params.maxbaths = clampInt(searchParams.maxbaths as string, 0, 20);
   if (offset > 0) params.offset = offset;
 
   let properties: Awaited<ReturnType<typeof searchListings>> = [];
