@@ -15,12 +15,16 @@ async function fetchAPI<T>(endpoint: string, params?: Record<string, string | nu
     });
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
   const res = await fetch(url.toString(), {
     headers: {
       Authorization: `Basic ${AUTH}`,
     },
     next: { revalidate: 300 },
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
 
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);

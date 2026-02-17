@@ -36,9 +36,19 @@ export default function FavoritesPage() {
         // Fallback to server-side API route if DB has no data yet
         const results = await Promise.all(
           favorites.map(async (mlsId) => {
-            const res = await fetch(`/api/properties/${mlsId}`);
-            if (!res.ok) return null;
-            return res.json();
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5_000);
+            try {
+              const res = await fetch(`/api/properties/${mlsId}`, {
+                signal: controller.signal,
+              });
+              if (!res.ok) return null;
+              return res.json();
+            } catch {
+              return null;
+            } finally {
+              clearTimeout(timeout);
+            }
           })
         );
         setProperties(results.filter(Boolean));

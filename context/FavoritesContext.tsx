@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { createClient } from "@/lib/supabase/client";
 
@@ -75,13 +75,20 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     }
   }, [favorites, loaded, user]);
 
+  // Debounce tracking: prevent rapid toggling of the same listing
+  const pendingToggles = useRef<Set<number>>(new Set());
+
   const toggleFavorite = useCallback(
     (mlsId: number) => {
+      if (pendingToggles.current.has(mlsId)) return;
+
       setFavorites((prev) => {
         const isFav = prev.includes(mlsId);
         const next = isFav ? prev.filter((id) => id !== mlsId) : [...prev, mlsId];
 
         if (user) {
+          pendingToggles.current.add(mlsId);
+
           // Sync with Supabase in background
           const operation = isFav
             ? supabase
@@ -94,6 +101,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
                 .insert({ user_id: user.id, mls_id: mlsId });
 
           operation.then(({ error }) => {
+            pendingToggles.current.delete(mlsId);
             if (error) {
               console.error("Failed to update favorite:", error.message);
               // Revert optimistic update
