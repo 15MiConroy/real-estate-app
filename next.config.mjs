@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.simplyrets.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.cloudfront.net",
+      },
     ],
   },
 };
