@@ -79,5 +79,13 @@ curl -X POST http://localhost:3000/api/sync -H "Authorization: Bearer <SYNC_SECR
 
 ## Deployment
 - Target platform: Vercel
+- Production URL: https://real-estate-app-one-red.vercel.app
 - Set all environment variables in Vercel project settings
 - After first deploy, run the sync curl command against the Vercel URL to seed data
+- Deploy via CLI: `npx vercel --prod --yes`
+
+## TODO - Low Severity Issues
+- [ ] **Alt text fallback on property images** - `components/PropertyCard.tsx` and `components/ImageCarousel.tsx` should fall back to `Property ${mlsId}` when `address.full` is empty
+- [ ] **Verify database indexes** - Ensure indexes exist on `listings.status`, `listings.list_price`, `listings.bedrooms`, `favorites.user_id`, and a unique index on `favorites(user_id, mls_id)` in Supabase
+- [ ] **Map component cleanup on unmount** - `components/MapViewClient.tsx` should clean up the Leaflet map instance in a `useEffect` return to prevent memory leaks
+- [ ] **Paginated sync for large datasets** - When upgrading to a paid SimplyRETS plan, update `/api/sync` to paginate through all results instead of fetching a single batch of 250
